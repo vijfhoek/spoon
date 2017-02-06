@@ -1,0 +1,33 @@
+body {
+}
+
+nav .logo {
+    display: inline-block;
+    font-family: -apple-system-caption1, 'Helvetica Neue', 'Arial', 'sans-serif';
+    font-size: 2em;
+}
+
+nav .navbar {
+    float: right;
+    font-family: -apple-system, 'Helvetica Neue', 'Arial', 'sans-serif';
+}
+nav .navbar a {
+    box-sizing: border-box;
+
+    height: 2em;
+    line-height: 2em;
+    padding: 0 10px;
+
+    color: #555;
+    text-decoration: none;
+}
+nav .navbar a:not(:last-child) {
+    border-right: 1px solid #aaa;
+}
+nav .navbar a:hover {
+    text-decoration: underline;
+}
+
+section {
+    border-bottom: 1px solid #eeeeee;
+}

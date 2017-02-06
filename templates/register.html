@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block body %}
+<section>
+    <h1>Sign up</h1>
+
+    <form method="POST">
+        <label for="email">E-mail address</label><br />
+        <input type="email" name="email" id="email"><br />
+
+        <label for="password">Password</label><br />
+        <input type="password" name="password" id="password"><br />
+
+        <input type="submit" value="Sign up!">
+    </form>
+</section>
+<section>
+    <h1>Pricing and stuff</h1>
+</section>
+<section>
+    (insert reviews)
+</section>
+{% endblock body %}
