@@ -74,17 +74,22 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	context := pongo2.Context{}
 
 	if r.Method == http.MethodPost {
+		// Retrieve the form fields
 		r.ParseForm()
 		email := r.Form["email"][0]
 		password := r.Form["password"][0]
 
 		if !validateEmail(email) {
+			// Make sure the e-mail address is of format user@hostname.tld
 			context.Update(pongo2.Context{"error": "invalid_email"})
 			fmt.Println("invalid email")
 		} else if !validatePassword(password) {
+			// Make sure the password conforms to the requirements
+			// (minimum of 8 characters, at least 1 digit)
 			context.Update(pongo2.Context{"error": "invalid_password"})
 			fmt.Println("invalid password")
 		} else {
+			// Generate the password hash
 			hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 			if err != nil {
 				internalServerError(w, err)
@@ -94,7 +99,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 			// Insert the user into the database
 			if err := DB.Create(&User{Email: email, Passhash: hashStr}).Error; err != nil {
-				if err, ok := err.(*pq.Error); ok && err.Code.Name() == "unique_violation" {
+				if errPq, ok := err.(*pq.Error); ok && errPq.Code.Name() == "unique_violation" {
 					context.Update(pongo2.Context{"error": "duplicate_email"})
 					fmt.Println("duplicate email")
 				} else {
@@ -116,14 +121,11 @@ func checkCreds(w http.ResponseWriter, r *http.Request) (user User, err error) {
 	email := r.Form["email"][0]
 	password := r.Form["password"][0]
 
-	if err = DB.First(&user, "email=$1", email).Error; err != nil {
-		if err.Error() == "record not found" {
-			fmt.Println("invalid credentials")
-			err = nil
-		} else {
-			fmt.Println(err)
-		}
+	// Check if the e-mail address has been registered
+	if DB.First(&user, "email=$1", email).RecordNotFound() {
+		fmt.Println("invalid credentials")
 
+		err = nil
 		user.ID = 0
 		return
 	}
@@ -140,7 +142,6 @@ func checkCreds(w http.ResponseWriter, r *http.Request) (user User, err error) {
 	err = bcrypt.CompareHashAndPassword(hash, []byte(password))
 	if err != nil {
 		fmt.Println("invalid credentials")
-		return
 	}
 
 	return

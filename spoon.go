@@ -17,12 +17,14 @@ var (
 )
 
 func main() {
+	// Read the config
 	var err error
 	if CFG, err = readConfig(); err != nil {
 		fmt.Println("Couldn't open config:", err)
 		return
 	}
 
+	// Connect to the database
 	options := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", CFG.DbUser, CFG.DbPassword, CFG.DbName)
 	if DB, err = gorm.Open("postgres", options); err != nil {
 		fmt.Println(err)
@@ -32,6 +34,7 @@ func main() {
 
 	Store = sessions.NewCookieStore([]byte(CFG.SecretKey))
 
+	// Register server routes
 	http.HandleFunc("/", Index)
 	http.HandleFunc("/register", Register)
 	http.HandleFunc("/login", Login)
