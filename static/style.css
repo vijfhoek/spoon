@@ -33,3 +33,8 @@ a:hover {
 section {
     border-bottom: 1px solid #eee;
 }
+
+.groceryItems {
+    list-style-type: none;
+    padding-left: 1em;
+}

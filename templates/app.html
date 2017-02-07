@@ -1,3 +1,123 @@
 {% extends "layout.html" %}
 {% block body %}
+<h1>Grocery list</h1>
+<table class="groceryItems">
+<thead>
+    <tr>
+        <th>Product</th>
+        <th>Cost</th>
+    </tr>
+</thead>
+<tbody>
+{% for item in groceryItems %}
+    <tr>
+        <td>{{ item.Name }}</td>
+        <td>
+            {% if item.Cost %}
+            &euro; {{ item.Cost / 100 }}.{% if item.Cost % 100 < 10 %}0{% endif %}{{ item.Cost % 100 }}
+            {% else %}
+            &euro; <input class="itemPrice" data-id="{{ item.ID }}" type="number" min="0" step="0.01" placeholder="2.49">
+            <input class="itemConfirm" data-id="{{ item.ID }}" type="button" value="OK">
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+</table>
+
+<h2>Add new item</h2>
+<form method="POST">
+    <input type="hidden" name="action" value="addItem">
+    <input type="text" name="name" placeholder="Item name">
+    <input type="submit" value="Add">
+</form>
+
+<h1>Payments due</h1>
+<h2>You to roommates</h2>
+{% if !dueItems %}
+Nothing here!
+{% else %}
+<table>
+<thead>
+    <tr>
+        <th>Product</th>
+        <th>Due</th>
+        <th>Payee</th>
+    </tr>
+</thead>
+<tbody>
+    {% for item in dueItems %}
+    <tr>
+        <td>{{ item.Name }}</td>
+        <td>&euro; {{ item.Split / 100 }}.{% if item.Split % 100 < 10 %}0{% endif %}{{ item.Split % 100 }}</td>
+        <td>{{ item.User.Name }}</td>
+    </tr>
+    {% endfor %}
+</tbody>
+</table>
+{% endif %}
+
+<h2>Roommates to you</h2>
+{% if !dueRxItems %}
+Nothing here!
+{% else %}
+<table>
+<thead>
+    <tr>
+        <th>Product</th>
+        <th>To receive</th>
+        <th>People</th>
+    </tr>
+</thead>
+<tbody>
+    {% for item in dueRxItems %}
+    <tr>
+        <td>{{ item.Name }}</td>
+        <td>{{ item.DueUsers|length }}x &euro; {{ item.Split / 100 }}.{% if item.Split % 100 < 10 %}0{% endif %}{{ item.Split % 100 }}</td>
+        <td>
+            {% for user in item.DueUsers %}
+            {{ user.Name }}{% if (forloop.Counter < item.DueUsers|length) %},{% endif %}
+            {% endfor %}
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+</table>
+{% endif %}
+
+<h1>Your room</h1>
+<b>{{ room.Name }}</b><br>
+<p>
+    {% for user in room.Users %}
+    {{ user.Name }}{% if (forloop.Counter < room.Users|length) %},{% endif %}
+    {% endfor %}
+</p>
+<p>
+    <form action="POST">
+        <input type="hidden" name="action" value="leaveRoom">
+        <input type="submit" onclick="return confirm('Are you sure you want to leave this room?')" value="Leave room">
+    </form>
+</p>
 {% endblock body %}
+
+{% block scripts %}
+<script>
+    $('.itemConfirm').on('click', function() {
+        var id = parseInt($(this).data('id'))
+        var input = $('.itemPrice[data-id=' + id + ']')
+        var cost = input.val() * 100
+
+        $.ajax({
+            url: "/api/check_item", 
+            method: 'POST', 
+            data: {
+                'itemID': id,
+                'cost': cost
+            },
+            success: function() {
+                location.reload()
+            }
+        })
+    });
+</script>
+{% endblock scripts %}
