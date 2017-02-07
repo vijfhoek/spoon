@@ -3,8 +3,7 @@
 
 * Medium priority
 ** Fix the styling
-** Split up spoon.go
+** Allow people to leave the room
 
 * Low priority
-** Make an iOS app
 ** Fix e-mail activation

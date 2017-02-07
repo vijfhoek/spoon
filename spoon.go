@@ -35,6 +35,7 @@ func main() {
 	http.HandleFunc("/", Index)
 	http.HandleFunc("/register", Register)
 	http.HandleFunc("/login", Login)
+	http.HandleFunc("/logoff", Logoff)
 	http.HandleFunc("/app", App)
 	http.HandleFunc("/api/check_item", ApiCheckItem)
 	http.Handle("/static/", http.FileServer(http.Dir('.')))

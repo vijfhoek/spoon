@@ -8,8 +8,13 @@
         <nav>
             <div class="logo"><a href="/">spoon</a></div>
             <div class="navbar">
+                {% if user && user.ID > 0 %}
+                <a href="#">{{ user.Name }}</a>
+                <a href="/logoff">Log off</a>
+                {% else %}
                 <a href="/register">Sign up</a>
                 <a href="/login">Log in</a>
+                {% endif %}
             </div>
         </nav>
 

@@ -40,7 +40,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	// If the user already is logged in, redirect them to /
 	if userID, ok := session.Values["userID"].(uint); ok && userID > 0 {
 		session.Save(r, w)
-		http.Redirect(w, r, "/app", 301)
+		http.Redirect(w, r, "/app", 302)
 		return
 	}
 
@@ -68,7 +68,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	// If the user already is logged in, redirect them to /
 	if userID, ok := session.Values["userID"].(uint); ok && userID > 0 {
 		session.Save(r, w)
-		http.Redirect(w, r, "/app", 301)
+		http.Redirect(w, r, "/app", 302)
 	}
 
 	context := pongo2.Context{}
@@ -158,7 +158,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(session.Values["userID"])
 	if userID, ok := session.Values["userID"].(uint); ok && userID > 0 {
 		session.Save(r, w)
-		http.Redirect(w, r, "/app", 301)
+		http.Redirect(w, r, "/app", 302)
 		return
 	}
 
@@ -173,7 +173,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			print("User ", user.Email, " logged in successfully")
 			session.Values["userID"] = user.ID
 			session.Save(r, w)
-			http.Redirect(w, r, "/app", 301)
+			http.Redirect(w, r, "/app", 302)
 		} else {
 			// If the credentials were invalid, tell the user
 			session.Save(r, w)
@@ -190,6 +190,22 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func Logoff(w http.ResponseWriter, r *http.Request) {
+	// Get the user's session
+	session, err := Store.Get(r, "spoon-session")
+	if err != nil {
+		internalServerError(w, err)
+		return
+	}
+
+	if _, ok := session.Values["userID"]; ok {
+		delete(session.Values, "userID")
+	}
+
+	session.Save(r, w)
+	http.Redirect(w, r, "/", 302)
+}
+
 func App(w http.ResponseWriter, r *http.Request) {
 	// Get the user's session
 	session, err := Store.Get(r, "spoon-session")
@@ -201,7 +217,7 @@ func App(w http.ResponseWriter, r *http.Request) {
 	// If the user isn't logged in, redirect them to the login page
 	user := getUser(w, session)
 	if user.ID == 0 {
-		http.Redirect(w, r, "/login", 301)
+		http.Redirect(w, r, "/login", 302)
 		return
 	}
 
@@ -221,7 +237,7 @@ func App(w http.ResponseWriter, r *http.Request) {
 			DB.Create(&GroceryItem{Name: name, RoomID: user.RoomID})
 		}
 
-		http.Redirect(w, r, "/app", 301)
+		http.Redirect(w, r, "/app", 302)
 		return
 	}
 
@@ -239,7 +255,7 @@ func App(w http.ResponseWriter, r *http.Request) {
 	DB.Preload("DueUsers").Model(&user).Related(&dueRxItems, "DueRxItems")
 	DB.Model(&room).Related(&groceryItems)
 
-	ctx := pongo2.Context{"groceryItems": groceryItems, "dueItems": dueItems, "dueRxItems": dueRxItems, "room": room}
+	ctx := pongo2.Context{"groceryItems": groceryItems, "dueItems": dueItems, "dueRxItems": dueRxItems, "user": user, "room": room}
 	if err := TplApp.ExecuteWriter(ctx, w); err != nil {
 		internalServerError(w, err)
 	}
