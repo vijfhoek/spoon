@@ -1,9 +1,9 @@
 * High priority
 ** Show log-in/register errors
+** Allow people to check-off things they paid
 
 * Medium priority
-** Fix the styling
 ** Allow people to leave the room
 
 * Low priority
-** Fix e-mail activation
+** Make the styling a bit more exciting
