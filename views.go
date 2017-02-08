@@ -358,7 +358,7 @@ func ApiDeleteItem(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "<h1>Bad Request</h1>", http.StatusBadRequest)
 		return
 	}
-	DB.Delete(GroceryItem{}, "id=? AND item.room_id=?", itemID, user.RoomID)
+	DB.Delete(GroceryItem{}, "id=?", itemID)
 
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write([]byte("OK")); err != nil {
