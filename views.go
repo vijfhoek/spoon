@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/flosch/pongo2"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
@@ -17,9 +18,6 @@ import (
 func internalServerError(w http.ResponseWriter, err error) {
 	fmt.Println(err.Error())
 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-}
-
-func methodNotAllowed(w http.ResponseWriter) {
 }
 
 var (
@@ -276,23 +274,26 @@ func getUser(w http.ResponseWriter, session *sessions.Session) (user User) {
 	return
 }
 
-func ApiCheckItem(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "<h1>Method Not Allowed</h1>", http.StatusMethodNotAllowed)
-		return
-	}
-
+func getSessionAndUser(w http.ResponseWriter, r *http.Request) (session *sessions.Session, user User, err error) {
 	// Get the user's session
-	session, err := Store.Get(r, "spoon-session")
+	session, err = Store.Get(r, "spoon-session")
 	if err != nil {
 		internalServerError(w, err)
 		return
 	}
 
-	user := getUser(w, session)
-	if user.ID == 0 {
+	user = getUser(w, session)
+	return
+}
+
+func ApiPostItemCost(w http.ResponseWriter, r *http.Request) {
+	// Get the user's session
+	_, user, err := getSessionAndUser(w, r)
+	if err != nil {
 		internalServerError(w, err)
 		return
+	} else if user.ID == 0 {
+		http.Error(w, "<h1>Unauthorized</h1>", http.StatusUnauthorized)
 	}
 
 	// Get the user's roommates
@@ -304,9 +305,9 @@ func ApiCheckItem(w http.ResponseWriter, r *http.Request) {
 
 	// Decode the body
 	r.ParseForm()
-	itemID, err1 := strconv.Atoi(r.Form["itemID"][0])
-	cost, err2 := strconv.Atoi(r.Form["cost"][0])
-	if err1 != nil || err2 != nil || cost < 0 {
+	cost, err := strconv.Atoi(r.Form["cost"][0])
+	itemID := mux.Vars(r)["id"]
+	if err != nil || cost < 0 {
 		http.Error(w, "<h1>Bad request</h1>", http.StatusBadRequest)
 		return
 	}
@@ -318,7 +319,7 @@ func ApiCheckItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if item.RoomID != user.RoomID {
-		http.Error(w, "<h1>Forbidden</h1>This is not your room.", http.StatusForbidden)
+		http.Error(w, "<h1>Forbidden</h1>\nThis is not your room.", http.StatusForbidden)
 		return
 	}
 
@@ -334,6 +335,57 @@ func ApiCheckItem(w http.ResponseWriter, r *http.Request) {
 	for _, roommate := range roommates {
 		DB.Create(&DueUserItem{GroceryItemID: item.ID, UserID: roommate.ID})
 		println(roommate.Name)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte("OK")); err != nil {
+		internalServerError(w, err)
+	}
+}
+
+func ApiDeleteItem(w http.ResponseWriter, r *http.Request) {
+	// Get the user's session
+	_, user, err := getSessionAndUser(w, r)
+	if err != nil {
+		internalServerError(w, err)
+		return
+	} else if user.ID == 0 {
+		http.Error(w, "<h1>Unauthorized</h1>", http.StatusUnauthorized)
+	}
+
+	itemID, err := strconv.Atoi(mux.Vars(r)["id"])
+	if err != nil {
+		http.Error(w, "<h1>Bad Request</h1>", http.StatusBadRequest)
+		return
+	} else if uint(itemID) != user.RoomID {
+		http.Error(w, "<h1>Forbidden</h1>\nThis is not your room.", http.StatusForbidden)
+		return
+	}
+	DB.Delete(GroceryItem{}, "id = ?", itemID)
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte("OK")); err != nil {
+		internalServerError(w, err)
+	}
+}
+
+func ApiPutItem(w http.ResponseWriter, r *http.Request) {
+	// Get the user's session
+	_, user, err := getSessionAndUser(w, r)
+	if err != nil {
+		internalServerError(w, err)
+		return
+	} else if user.ID == 0 {
+		http.Error(w, "<h1>Unauthorized</h1>", http.StatusUnauthorized)
+	}
+
+	r.ParseForm()
+	fmt.Println(r.Form)
+	name := r.Form["name"][0]
+
+	if err := DB.Create(&GroceryItem{Name: name, RoomID: user.RoomID}).Error; err != nil {
+		internalServerError(w, err)
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/context"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -35,12 +36,17 @@ func main() {
 	Store = sessions.NewCookieStore([]byte(CFG.SecretKey))
 
 	// Register server routes
-	http.HandleFunc("/", Index)
-	http.HandleFunc("/register", Register)
-	http.HandleFunc("/login", Login)
-	http.HandleFunc("/logoff", Logoff)
-	http.HandleFunc("/app", App)
-	http.HandleFunc("/api/check_item", ApiCheckItem)
+	r := mux.NewRouter()
+	r.HandleFunc("/", Index)
+	r.HandleFunc("/register", Register)
+	r.HandleFunc("/login", Login)
+	r.HandleFunc("/logoff", Logoff)
+	r.HandleFunc("/app", App)
+	r.HandleFunc("/api/item/{id:[0-9]+}/cost", ApiPostItemCost).Methods("POST")
+	r.HandleFunc("/api/item/{id:[0-9]+}", ApiDeleteItem).Methods("DELETE")
+	r.HandleFunc("/api/item", ApiPutItem).Methods("PUT")
+
 	http.Handle("/static/", http.FileServer(http.Dir('.')))
+	http.Handle("/", r)
 	http.ListenAndServe(":8080", context.ClearHandler(http.DefaultServeMux))
 }

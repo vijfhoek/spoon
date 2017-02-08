@@ -2,10 +2,16 @@
 {% block body %}
 <h1>Grocery list</h1>
 <table class="groceryItems">
+<colgroup>
+    <col style="width: auto">
+    <col style="width: 200px">
+    <col style="width: 50px">
+</colgroup>
 <thead>
     <tr>
         <th>Product</th>
         <th>Cost</th>
+        <th></th>
     </tr>
 </thead>
 <tbody>
@@ -16,21 +22,22 @@
             {% if item.Cost %}
             &euro; {{ item.Cost / 100 }}.{% if item.Cost % 100 < 10 %}0{% endif %}{{ item.Cost % 100 }}
             {% else %}
-            &euro; <input class="itemPrice" data-id="{{ item.ID }}" type="number" min="0" step="0.01" placeholder="2.49">
+            &euro;&nbsp;<input class="itemPrice" data-id="{{ item.ID }}" type="number" min="0" step="0.01" placeholder="2.49">
             <input class="itemConfirm" data-id="{{ item.ID }}" type="button" value="OK">
             {% endif %}
         </td>
+        <td>
+            <input class="itemDelete" data-id="{{ item.ID }}" type="button" value="X">
+        </td>
     </tr>
     {% endfor %}
+    <tr>
+        <td><input type="text" class="itemAddInput" placeholder="New item"></td>
+        <td></td>
+        <td><input type="button" class="itemAddButton" value="+"></td>
+    </tr>
 </tbody>
 </table>
-
-<h2>Add new item</h2>
-<form method="POST">
-    <input type="hidden" name="action" value="addItem">
-    <input type="text" name="name" placeholder="Item name">
-    <input type="submit" value="Add">
-</form>
 
 <h1>Payments due</h1>
 <h2>You to roommates</h2>
@@ -49,7 +56,7 @@ Nothing here!
     {% for item in dueItems %}
     <tr>
         <td>{{ item.Name }}</td>
-        <td>&euro; {{ item.Split / 100 }}.{% if item.Split % 100 < 10 %}0{% endif %}{{ item.Split % 100 }}</td>
+        <td>&euro;{{ item.Split / 100 }}.{% if item.Split % 100 < 10 %}0{% endif %}{{ item.Split % 100 }}</td>
         <td>{{ item.User.Name }}</td>
     </tr>
     {% endfor %}
@@ -73,7 +80,7 @@ Nothing here!
     {% for item in dueRxItems %}
     <tr>
         <td>{{ item.Name }}</td>
-        <td>{{ item.DueUsers|length }}x &euro; {{ item.Split / 100 }}.{% if item.Split % 100 < 10 %}0{% endif %}{{ item.Split % 100 }}</td>
+        <td>{{ item.DueUsers|length }}x &euro;{{ item.Split / 100 }}.{% if item.Split % 100 < 10 %}0{% endif %}{{ item.Split % 100 }}</td>
         <td>
             {% for user in item.DueUsers %}
             {{ user.Name }}{% if (forloop.Counter < item.DueUsers|length) %},{% endif %}
@@ -86,10 +93,10 @@ Nothing here!
 {% endif %}
 
 <h1>Your room</h1>
-<b>{{ room.Name }}</b><br>
+<b>{{ room.Name }}</b>
 <p>
     {% for user in room.Users %}
-    {{ user.Name }}{% if (forloop.Counter < room.Users|length) %},{% endif %}
+    {{ user.Name }}{% if forloop.Counter < room.Users|length %},{% endif %}
     {% endfor %}
 </p>
 <p>
@@ -103,21 +110,35 @@ Nothing here!
 {% block scripts %}
 <script>
     $('.itemConfirm').on('click', function() {
-        var id = parseInt($(this).data('id'))
-        var input = $('.itemPrice[data-id=' + id + ']')
-        var cost = input.val() * 100
-
+        let id = parseInt($(this).data('id'))
+        let input = $('.itemPrice[data-id=' + id + ']')
+        let cost = parseInt(input.val() * 100);
         $.ajax({
-            url: "/api/check_item", 
+            url: '/api/item/' + id + '/cost',
             method: 'POST', 
-            data: {
-                'itemID': id,
-                'cost': cost
-            },
-            success: function() {
-                location.reload()
-            }
+            data: { 'cost': cost },
+            success: () => location.reload()
         })
     });
+
+    $('.itemDelete').on('click', function() {
+        let id = parseInt($(this).data('id'))
+        $.ajax({
+            url: '/api/item/' + id,
+            method: 'DELETE',
+            success: () => location.reload()
+        })
+    });
+
+    $('.itemAddButton').on('click', function() {
+        let id = parseInt($(this).data('id'))
+        let name = $('.itemAddInput').val()
+        $.ajax({
+            url: '/api/item',
+            method: 'PUT',
+            data: { 'name': name },
+            success: () => location.reload()
+        })
+    })
 </script>
 {% endblock scripts %}
