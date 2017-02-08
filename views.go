@@ -220,26 +220,6 @@ func App(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Method == "POST" {
-		r.ParseForm()
-		action := r.Form["action"][0]
-		name := r.Form["name"][0]
-
-		// Get the user's roommates
-		var roommates []User
-		if err := DB.Where("id <> ?", user.ID).Find(&roommates).Error; err != nil {
-			internalServerError(w, err)
-			return
-		}
-
-		if action == "addItem" {
-			DB.Create(&GroceryItem{Name: name, RoomID: user.RoomID})
-		}
-
-		http.Redirect(w, r, "/app", 302)
-		return
-	}
-
 	// Retrieve the user's room's grocery list
 	var (
 		room         Room
