@@ -1,9 +1,12 @@
-* High priority
-** Show log-in/register errors
-** Allow people to check-off things they paid
+* High priority [0/2]
+  - [ ] Show log-in/register errors
+  - [ ] Allow people to check-off things they paid for
 
-* Medium priority
-** Allow people to leave the room
+* Medium priority [2/3]
+  - [X] Fix the styling
+  - [X] Split up spoon.go
+  - [ ] Allow people to leave their room
 
-* Low priority
-** Make the styling a bit more exciting
+* Low priority [0/2]
+  - [ ] Make the styling a bit more exciting
+  - [ ] Add e-mail activation
