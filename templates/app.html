@@ -49,7 +49,8 @@ Nothing here!
     <tr>
         <th>Product</th>
         <th>Due</th>
-        <th>Payee</th>
+        <th>To</th>
+        <th></th>
     </tr>
 </thead>
 <tbody>
@@ -58,6 +59,7 @@ Nothing here!
         <td>{{ item.Name }}</td>
         <td>&euro;{{ item.Split / 100 }}.{% if item.Split % 100 < 10 %}0{% endif %}{{ item.Split % 100 }}</td>
         <td>{{ item.User.Name }}</td>
+        <td><input type="button" class="dueItemDone" data-id="{{ item.ID }}" value="Done"></td>
     </tr>
     {% endfor %}
 </tbody>
@@ -137,6 +139,15 @@ Nothing here!
             url: '/api/item',
             method: 'PUT',
             data: { 'name': name },
+            success: () => location.reload()
+        })
+    });
+
+    $('.dueItemDone').on('click', function() {
+        let id = parseInt($(this).data('id'))
+        $.ajax({
+            url: '/api/item/' + id + '/paid',
+            method: 'PUT',
             success: () => location.reload()
         })
     })

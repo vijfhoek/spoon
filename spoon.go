@@ -44,6 +44,7 @@ func main() {
 	r.HandleFunc("/app", App)
 	r.HandleFunc("/api/item/{id:[0-9]+}/cost", ApiPostItemCost).Methods("POST")
 	r.HandleFunc("/api/item/{id:[0-9]+}", ApiDeleteItem).Methods("DELETE")
+	r.HandleFunc("/api/item/{id:[0-9]+}/paid", ApiPutItemPaid).Methods("PUT")
 	r.HandleFunc("/api/item", ApiPutItem).Methods("PUT")
 
 	http.Handle("/static/", http.FileServer(http.Dir('.')))

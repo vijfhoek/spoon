@@ -43,7 +43,8 @@ type GroceryItem struct {
 	User   User `gorm:"ForeignKey:UserID"`
 
 	// The Users that still have to pay for this item
-	DueUsers []User `gorm:"many2many:due_user_items"`
+	DueUsers     []User        `gorm:"many2many:due_user_items"`
+	DueUserItems []DueUserItem `gorm:"ForeignKey:GroceryItemID"`
 }
 
 // DueUserItem is an ORM model of the due_user_items table. Maps users to items they still have to pay for.
@@ -51,5 +52,7 @@ type DueUserItem struct {
 	gorm.Model
 
 	GroceryItemID uint
-	UserID        uint
+	GroceryItem   GroceryItem `gorm:"ForeignKey:GroceryItemID"`
+
+	UserID uint
 }

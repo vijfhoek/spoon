@@ -250,7 +250,7 @@ func App(w http.ResponseWriter, r *http.Request) {
 
 	// Build the user- and room objects
 	DB.Preload("Users").Model(&user).Related(&room)
-	DB.Preload("User").Model(&user).Related(&dueItems, "DueItems")
+	DB.Preload("User").Model(&user).Where("due_user_items.deleted_at IS NULL").Related(&dueItems, "DueItems")
 	DB.Preload("DueUsers").Model(&user).Related(&dueRxItems, "DueRxItems")
 	DB.Model(&room).Related(&groceryItems)
 
@@ -357,11 +357,8 @@ func ApiDeleteItem(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "<h1>Bad Request</h1>", http.StatusBadRequest)
 		return
-	} else if uint(itemID) != user.RoomID {
-		http.Error(w, "<h1>Forbidden</h1>\nThis is not your room.", http.StatusForbidden)
-		return
 	}
-	DB.Delete(GroceryItem{}, "id = ?", itemID)
+	DB.Delete(GroceryItem{}, "id=? AND item.room_id=?", itemID, user.RoomID)
 
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write([]byte("OK")); err != nil {
@@ -380,10 +377,38 @@ func ApiPutItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	r.ParseForm()
-	fmt.Println(r.Form)
 	name := r.Form["name"][0]
 
 	if err := DB.Create(&GroceryItem{Name: name, RoomID: user.RoomID}).Error; err != nil {
+		internalServerError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte("OK")); err != nil {
+		internalServerError(w, err)
+	}
+}
+
+func ApiPutItemPaid(w http.ResponseWriter, r *http.Request) {
+	// Get the user's session
+	_, user, err := getSessionAndUser(w, r)
+	if err != nil {
+		internalServerError(w, err)
+		return
+	} else if user.ID == 0 {
+		http.Error(w, "<h1>Unauthorized</h1>", http.StatusUnauthorized)
+		return
+	}
+
+	r.ParseForm()
+	itemID, err := strconv.Atoi(mux.Vars(r)["id"])
+	if err != nil {
+		http.Error(w, "<h1>Bad Request</h1>", http.StatusBadRequest)
+		return
+	}
+
+	if err := DB.Delete(DueUserItem{}, "user_id=? AND grocery_item_id=?", user.ID, itemID).Error; err != nil {
 		internalServerError(w, err)
 		return
 	}
